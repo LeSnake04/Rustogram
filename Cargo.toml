@@ -1,5 +1,5 @@
 [package]
-name = "nonogram"
+name = "Rustogram"
 license = "GPL-3.0"
 version = "0.0.1"
 edition = "2021"

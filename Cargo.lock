@@ -3,6 +3,21 @@
 version = 3
 
 [[package]]
+name = "Rustogram"
+version = "0.0.1"
+dependencies = [
+ "bevy",
+ "bevy_egui",
+ "bincode",
+ "chrono",
+ "serde",
+ "serde_derive",
+ "stopwatch",
+ "toml",
+ "toml_edit",
+]
+
+[[package]]
 name = "ab_glyph"
 version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1494,21 +1509,6 @@ name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451"
-
-[[package]]
-name = "nonogram"
-version = "0.0.1"
-dependencies = [
- "bevy",
- "bevy_egui",
- "bincode",
- "chrono",
- "serde",
- "serde_derive",
- "stopwatch",
- "toml",
- "toml_edit",
-]
 
 [[package]]
 name = "ntapi"
