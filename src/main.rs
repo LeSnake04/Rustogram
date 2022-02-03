@@ -1,87 +1,53 @@
-use std::sync::atomic::Ordering;
-use std::thread::sleep;
-use std::time::Duration;
-use bevy::app::Events;
-use bevy::asset::{Assets, AssetServer};
+use bevy::input::system::exit_on_esc_system;
+use bevy::log::{Level, LogSettings};
+use bevy::prelude::{App, IntoSystem, Msaa, ParallelSystemDescriptorCoercion, WindowDescriptor};
+use bevy::window::exit_on_window_close_system;
 use bevy::DefaultPlugins;
-use bevy::math::{Vec2};
-use bevy::prelude::{App, Color, Commands, IntoExclusiveSystem, OrthographicCameraBundle, Res, ResMut, SpriteBundle, Time, Transform, UiCameraBundle, Windows, IntoSystem};
-use bevy::sprite::{ColorMaterial, Sprite};
-use bevy::window::{WindowDescriptor, WindowResized};
-use atomic_float::AtomicF32;
-use bevy::log::debug;
+use bevy_egui::EguiPlugin;
 
-static WINDOW_WIDTH: AtomicF32 = AtomicF32::new(600.0);
-static WINDOW_HEIGHT: AtomicF32 = AtomicF32::new(600.0);
+use crate::game::{load_level, pause_on_unfocus, GameState};
+use crate::level::Nonogram;
+use crate::save::RustogramSave;
+use crate::ui::{main_ui, store_window_size, UiState, WindowSizeRes};
 
-#[macro_export]
-macro_rules! get_window_width {
-    () => { WINDOW_WIDTH.load(Ordering::Relaxed)};
-}
-macro_rules! get_window_height {
-    () => { WINDOW_HEIGHT.load(Ordering::Relaxed)};
-}
+mod game;
+mod level;
+mod save;
+mod ui;
 
 fn main() {
-	println!("Hello, world!");
-	App::build()
-		.insert_resource( WindowDescriptor{
-			title: "Rustogram".to_string(),
-			width: get_window_width!(),
-			height: WINDOW_HEIGHT.load(Ordering::Relaxed),
-			vsync: true,
-			..Default::default()
-		} )
+	App::new()
+		.insert_resource(LogSettings {
+			filter: "nonogram=trace".to_string(),
+			level: Level::ERROR,
+		})
 		.add_plugins(DefaultPlugins)
-		.add_system(detect_resize.system())
-		//.add_startup_system(setup)
+		.add_plugin(EguiPlugin)
+		.insert_resource(WindowDescriptor {
+			title: "Rustogram".to_string(),
+			cursor_visible: true,
+			vsync: true,
+			resizable: true,
+			..Default::default()
+		})
+		.insert_resource(Msaa { samples: 8 })
+		.insert_resource(GameState {
+			id: "test".to_string(),
+			menu: true,
+			running: true,
+			game: Nonogram::default(),
+			solve: false,
+			save: RustogramSave::new("test".to_string(), 2, 2),
+			solution: vec![vec![1, 0], vec![1, 1]],
+			time: Default::default(),
+		})
+		.insert_resource(WindowSizeRes::default())
+		.init_resource::<UiState>()
+		.add_system(store_window_size.system().label("window_size"))
+		.add_system(main_ui.system().after("window_size").after("load_level"))
+		.add_system(load_level.system().label("load_level"))
+		.add_system(exit_on_esc_system.system())
+		.add_system(exit_on_window_close_system.system())
+		.add_system(pause_on_unfocus.system())
 		.run();
-}
-
-/*fn setup(
-	mut commands: Commands,
-	mut materials: ResMut<Assets<ColorMaterial>>,
-	asset_server: Res<AssetServer>
-){
-	//cameras
-	commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-	commands.spawn_bundle(UiCameraBundle::default());
-
-	//Background
-	commands.spawn_bundle(SpriteBundle{
-		sprite: Sprite::new(Vec2::new(WINDOW_WIDTH, WINDOW_HEIGHT),
-		material: materials.add(Color::rgb(0.0, 0.0, 0.0).into()),
-		transform: Transform::from_xyz(WINDOW_WIDTH,WINDOW_HEIGHT,0.0),
-		..Default::default()
-	});
-}*/
-
-/// This system detects window changes
-fn detect_resize(
-	resize_event: Res<Events<WindowResized>>
-) {
-	let mut reader = resize_event.get_reader();
-	let mut updated: bool = false;
-	debug!(updated);
-	for e in reader.iter(&resize_event) {
-		if e.width != get_window_width!() {
-			WINDOW_WIDTH.store(e.width, Ordering::Relaxed);
-			updated=true;
-		};
-		if e.height != get_window_height!() {
-			WINDOW_HEIGHT.store(e.height, Ordering::Relaxed);
-			updated=true
-		};
-		sleep(Duration::from_millis(15));
-	}
-	if updated {println!("Resized to x:{} y:{}", get_window_width!(), get_window_height!())}
-}
-
-/// This system will then change the title during execution
-fn timer_title(time: Res<Time>, mut windows: ResMut<Windows>) {
-	let window = windows.get_primary_mut().unwrap();
-	window.set_title(format!(
-		"Rustogram Game: {}",
-		time.seconds_since_startup().round()
-	));
 }
