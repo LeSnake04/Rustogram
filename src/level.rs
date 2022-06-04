@@ -4,10 +4,14 @@ use std::path::PathBuf;
 
 use serde_derive::Deserialize;
 
+fn base_path() -> String {
+	current_dir().unwrap().to_string_lossy().parse().unwrap()
+}
+
 /// Nonogram
 /// ---
 ///
-/// Describes the Structure of a Nonogram
+/// Defines a Nonogram
 #[derive(Deserialize, Clone)]
 pub struct Nonogram {
 	pub id: String,
@@ -31,17 +35,10 @@ pub struct Nonogram {
 }
 
 #[derive(Debug)]
-pub enum NonogramError {
+pub enum Error {
 	TomlParsing(toml::de::Error),
-	//NonogramParsing(String),
-}
-
-fn generate_path(id: String) -> PathBuf {
-	PathBuf::from(format!(
-		"{}/level/{}.nonogram.level",
-		current_dir().unwrap().to_string_lossy(),
-		id
-	))
+	Unknown(String),
+	//NonogramParsing(String)
 }
 
 impl Nonogram {
@@ -54,22 +51,22 @@ impl Nonogram {
 			color_values: vec![(255, 255, 255)],
 			x: vec![vec![(1, 1), (0, 1)]],
 			y: vec![vec![(1, 2)]],
-			path: generate_path("test".to_string()),
+			path: Self::generate_path("test".to_string()),
 		}
 	}
 
 	pub fn generate_path(id: String) -> PathBuf {
-		generate_path(id)
+		PathBuf::from(format!("{}/level/{}.nonogram.level", base_path(), id))
 	}
 
 	pub fn path(&self) -> PathBuf {
-		generate_path(self.id.to_owned())
+		Self::generate_path(self.id.to_owned())
 	}
 
-	pub fn from_toml(id: String) -> Result<Nonogram, NonogramError> {
-		match toml::from_str(read_to_string(generate_path(id)).unwrap().as_str()) {
+	pub fn from_toml(id: String) -> Result<Nonogram, Error> {
+		match toml::from_str(read_to_string(Self::generate_path(id)).unwrap().as_str()) {
 			Ok(r) => Ok(r),
-			Err(e) => Err(NonogramError::TomlParsing(e)),
+			Err(e) => Err(Error::TomlParsing(e)),
 		}
 	}
 }

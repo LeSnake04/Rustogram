@@ -1,11 +1,10 @@
 use bevy::prelude::{trace, EventReader, ResMut};
 use std::default::Default;
-use std::time::Duration;
 
 use crate::GameState;
 use bevy::window::WindowResized;
 use bevy_egui::egui::panel::TopBottomSide::Top;
-use bevy_egui::egui::{CentralPanel, Color32, CtxRef, RichText, TopBottomPanel, Ui, Visuals};
+use bevy_egui::egui::{CentralPanel, Color32, RichText, TopBottomPanel, Ui, Visuals};
 use bevy_egui::{egui, EguiContext};
 use chrono::Duration as cDuration;
 
@@ -33,14 +32,11 @@ pub fn store_window_size(
 
 pub fn main_ui(
 	mut state: ResMut<GameState>,
-	ectx: ResMut<EguiContext>,
+	mut ectx: ResMut<EguiContext>,
 	//win_size: Res<WindowSizeRes>
 ) {
 	// Configure egui
-	ectx.ctx().set_visuals(Visuals {
-		window_corner_radius: 10.0,
-		..Default::default()
-	});
+	&ectx.ctx_mut().set_visuals(Visuals::dark());
 
 	fn two_digit_number(number: i64) -> String {
 		if number < 10 {
@@ -52,14 +48,15 @@ pub fn main_ui(
 
 	/// Function to create egui dialog
 	/// ---
-	fn egui_dialog(title: &str, content: &str, ctx: &CtxRef) {
-		egui::Window::new(title.to_string()).show(ctx, |ui| ui.label(content.to_string()));
+	fn egui_dialog(title: &str, content: &str, ctx: &mut EguiContext) {
+		egui::Window::new(title.to_string())
+			.show(ctx.ctx_mut(), |ui| ui.label(content.to_string()));
 	}
 
 	// Status bar
 	TopBottomPanel::new(Top, "status_panel")
 		//.default_height(win_size.height * 0.1)
-		.show(ectx.ctx(), |ui| {
+		.show(ectx.ctx_mut(), |ui| {
 			ui.horizontal(|ui| {
 				ui.heading("Rustogram");
 				let duration: cDuration = cDuration::from_std(state.time.elapsed()).unwrap();
@@ -84,7 +81,7 @@ pub fn main_ui(
 
 	let game = &state.game;
 	let color_values: &Vec<(u8, u8, u8)> = &game.color_values;
-	CentralPanel::default().show(ectx.ctx(), |ui| {
+	CentralPanel::default().show(ectx.ctx_mut(), |ui| {
 		ui.heading(&state.id);
 		egui::Grid::new("playing_field").show(ui, |ui| {
 			fn draw_color_order(

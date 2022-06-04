@@ -1,6 +1,6 @@
 use bevy::input::system::exit_on_esc_system;
 use bevy::log::{Level, LogSettings};
-use bevy::prelude::{App, IntoSystem, Msaa, ParallelSystemDescriptorCoercion, WindowDescriptor};
+use bevy::prelude::{App, Msaa, ParallelSystemDescriptorCoercion, WindowDescriptor};
 use bevy::window::exit_on_window_close_system;
 use bevy::DefaultPlugins;
 use bevy_egui::EguiPlugin;
@@ -26,7 +26,6 @@ fn main() {
 		.insert_resource(WindowDescriptor {
 			title: "Rustogram".to_string(),
 			cursor_visible: true,
-			vsync: true,
 			resizable: true,
 			..Default::default()
 		})
@@ -43,11 +42,11 @@ fn main() {
 		})
 		.insert_resource(WindowSizeRes::default())
 		.init_resource::<UiState>()
-		.add_system(store_window_size.system().label("window_size"))
-		.add_system(main_ui.system().after("window_size").after("load_level"))
-		.add_system(load_level.system().label("load_level"))
-		.add_system(exit_on_esc_system.system())
-		.add_system(exit_on_window_close_system.system())
-		.add_system(pause_on_unfocus.system())
+		.add_system(store_window_size.label("window_size"))
+		.add_system(main_ui.after("window_size").after("load_level"))
+		.add_system(load_level.label("load_level"))
+		.add_system(exit_on_esc_system)
+		.add_system(exit_on_window_close_system)
+		.add_system(pause_on_unfocus)
 		.run();
 }
